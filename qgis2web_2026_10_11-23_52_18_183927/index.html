@@ -47,6 +47,23 @@
         var hash = new L.Hash(map);
         map.attributionControl.setPrefix('<a href="https://github.com/qgis2web/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
         var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+
+        // 新增：從 photo_path 取出檔名，拼到 images/ 目錄
+        function getPhotoUrl(photoPath) {
+            if (!photoPath) return '';
+            var path = String(photoPath).trim();
+            // 如果是完整的 http/https URL，直接返回
+            if (/^https?:\/\//i.test(path)) return path;
+            // 把反斜線统一换成正斜杠
+            path = path.replace(/\\/g, '/');
+            // 取最后一个斜杠后的文件名
+            var fileName = path.substring(path.lastIndexOf('/') + 1);
+            // 去掉可能的查询参数或哈希
+            fileName = fileName.split('?')[0].split('#')[0];
+            // 对文件名进行 URL 编码，避免中文、空格等问题
+            return 'images/' + encodeURIComponent(fileName);
+        }
+
         // remove popup's row if "visible-with-data"
         function removeEmptyRowsFromPopupContent(content, feature) {
          var tempDiv = document.createElement('div');
@@ -104,7 +121,6 @@
                     video.style.maxWidth = "60vw";
                     imgTd.parentNode.replaceChild(video, imgTd);
                     popup._contentNode.classList.add('media');
-                    // Aggiorna il popup quando il video carica i metadati
                     video.addEventListener('loadedmetadata', function() {
                         popup.update();
                     });
@@ -220,7 +236,7 @@
                         <td colspan="2">' + (feature.properties['file_name'] !== null ? autolinker.link(String(feature.properties['file_name']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
                     </tr>\
                     <tr>\
-                        <td colspan="2">' + (feature.properties['photo_path'] !== null ? '<img src="images/' + String(feature.properties['photo_path']).replace(/[\\/:]/g, '_').trim().replace(/'/g, '\'').replace(/"/g, '&quot;') + '">' : '') + '</td>\
+                        <td colspan="2">' + (feature.properties['photo_path'] !== null ? '<img src="' + getPhotoUrl(feature.properties['photo_path']) + '" alt="照片">' : '') + '</td>\
                     </tr>\
                     <tr>\
                         <td colspan="2">' + (feature.properties['keycode'] !== null ? autolinker.link(String(feature.properties['keycode']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
